@@ -104,6 +104,7 @@ button{-webkit-tap-highlight-color:transparent}
  .layout{gap:10px}
 }
 
+.settings-toggle-row{display:flex;justify-content:flex-start;margin:8px 0 7px}.settings-toggle-row .btn{min-height:40px;font-size:13px}.analysis-settings{padding:8px 0 3px}.analysis-settings[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -124,8 +125,11 @@ button{-webkit-tap-highlight-color:transparent}
 <section class="panel">
  <div class="section">
   <h2>局面解析</h2>
-  <div class="fieldrow"><label for="depth">探索深度</label><input type="range" id="depth" min="2" max="12" value="8"><span class="depthval" id="depthVal">8 ply</span></div>
-  <div class="fieldrow"><label for="timeLimit">探索時間</label><select id="timeLimit"><option value="350">短め（約0.35秒）</option><option value="800" selected>標準（約0.8秒）</option><option value="1500">長め（約1.5秒）</option><option value="3000">じっくり（約3秒）</option></select></div>
+  <div class="settings-toggle-row"><button class="btn" type="button" id="analysisSettingsToggle" aria-controls="analysisSettings" aria-expanded="false">⚙ 探索設定を表示</button></div>
+  <div class="analysis-settings" id="analysisSettings" hidden>
+   <div class="fieldrow"><label for="depth">探索深度</label><input type="range" id="depth" min="2" max="12" value="8"><span class="depthval" id="depthVal">8 ply</span></div>
+   <div class="fieldrow"><label for="timeLimit">探索時間</label><select id="timeLimit"><option value="350">短め（約0.35秒）</option><option value="800" selected>標準（約0.8秒）</option><option value="1500">長め（約1.5秒）</option><option value="3000">じっくり（約3秒）</option></select></div>
+  </div>
   <div class="controls"><button class="btn primary" id="analyzeBtn">⚡ 最善手を解析</button><button class="btn" id="playBestBtn" disabled>最善手を指す</button></div>
   <div class="analysis-box"><div class="analysis-title"><strong>解析結果</strong><span class="eval" id="evalLabel">未解析</span></div><div class="muted" id="analysisSummary" style="margin-top:6px">「最善手を解析」を押すと、現在の手番側にとって有力な候補を表示します。</div><div class="candidates" id="candidates"></div><div class="pv" id="pv"></div><div class="status" id="searchStatus"></div></div>
   <div class="notice">解析は指定深度・時間内のミニマックス探索です。候補の順位は探索結果に基づく目安であり、すべての局面で完全読み切りを保証するものではありません。</div>
@@ -228,7 +232,7 @@ function renderStartSide(){const sente=startSide===0;$('startSenteBtn').classLis
 function setStartSide(side){if(side!==0&&side!==1)return;startSide=side;renderStartSide();}
 function renderInventory(){let html='';for(let s=0;s<2;s++){html+=`<div class="inventory-row"><b style="color:${s===0?'#a9f0cf':'#ffc4d5'}">${s===0?'先手':'後手'}</b><span></span></div>`;for(let t of HAND_TYPES){html+=`<div class="inventory-row"><span>${pieceImg(t)} ${NAMES[t]}</span><span class="counter"><button data-dec="${s}-${t}">−</button><b>${state.hand[s][t]||0}</b><button data-inc="${s}-${t}">＋</button></span></div>`;}}$('inventory').innerHTML=html;$('inventory').querySelectorAll('[data-dec],[data-inc]').forEach(b=>b.addEventListener('click',()=>{let [s,t]=(b.dataset.inc||b.dataset.dec).split('-');let d=b.dataset.inc?1:-1;state.hand[+s][t]=Math.max(0,Math.min(3,(state.hand[+s][t]||0)+d));renderInventory();}));}
 function closeEditor(){editMode=false;$('editor').classList.remove('show');$('editorToggle').textContent='編集モードを開く';}
-$('board3Btn').addEventListener('click',()=>setBoardSize(3));$('board4Btn').addEventListener('click',()=>setBoardSize(4));$('depth').addEventListener('input',e=>$('depthVal').textContent=e.target.value+' ply');$('analyzeBtn').addEventListener('click',analyze);$('playBestBtn').addEventListener('click',()=>{if(analysis?.moves?.[0])safeApplyMove(analysis.moves[0].move);});$('undoBtn').addEventListener('click',undo);$('resetBtn').addEventListener('click',resetToInitial);$('clearSelBtn').addEventListener('click',()=>{selected=null;dropType=null;legalCache=[];render();});$('editorToggle').addEventListener('click',()=>{if(editMode){closeEditor();render();}else openEditor();});$('editSide').addEventListener('change',e=>{editSide=+e.target.value;});$('startSenteBtn').addEventListener('click',()=>setStartSide(0));$('startGoteBtn').addEventListener('click',()=>setStartSide(1));$('eraseTool').addEventListener('click',()=>{eraseMode=!eraseMode;renderEditorTools();});
+$('board3Btn').addEventListener('click',()=>setBoardSize(3));$('board4Btn').addEventListener('click',()=>setBoardSize(4));$('analysisSettingsToggle').addEventListener('click',()=>{const box=$('analysisSettings');const willOpen=box.hidden;box.hidden=!willOpen;$('analysisSettingsToggle').textContent=willOpen?'⚙ 探索設定を隠す':'⚙ 探索設定を表示';$('analysisSettingsToggle').setAttribute('aria-expanded',String(willOpen));});$('depth').addEventListener('input',e=>$('depthVal').textContent=e.target.value+' ply');$('analyzeBtn').addEventListener('click',analyze);$('playBestBtn').addEventListener('click',()=>{if(analysis?.moves?.[0])safeApplyMove(analysis.moves[0].move);});$('undoBtn').addEventListener('click',undo);$('resetBtn').addEventListener('click',resetToInitial);$('clearSelBtn').addEventListener('click',()=>{selected=null;dropType=null;legalCache=[];render();});$('editorToggle').addEventListener('click',()=>{if(editMode){closeEditor();render();}else openEditor();});$('editSide').addEventListener('change',e=>{editSide=+e.target.value;});$('startSenteBtn').addEventListener('click',()=>setStartSide(0));$('startGoteBtn').addEventListener('click',()=>setStartSide(1));$('eraseTool').addEventListener('click',()=>{eraseMode=!eraseMode;renderEditorTools();});
 $('standardSetup').addEventListener('click',()=>{state=standardState();state.turn=startSide;selected=null;dropType=null;legalCache=[];analysis=null;renderInventory();render();$('editorActionStatus').textContent='標準初期配置に戻しました。';});
 $('clearBoardEditor').addEventListener('click',()=>{state.board=Array(16).fill(null);selected=null;dropType=null;legalCache=[];analysis=null;render();$('editorActionStatus').textContent='盤上の駒をすべて取り除きました。持ち駒数は維持しています。リーダーを含め、配置を作成してください。';});
 
